@@ -2,6 +2,18 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { UserInputContext } from './UserInputContext';
 
+export type Input = {
+    args: {
+        taskId: string;
+        command: string | string[];
+        cwd: string;
+        env: Record<string, string>;
+    },
+    id: string;
+    type: string;
+    workspaceIndex: number;
+}
+
 export class VariableResolver {
     protected expressionRegex = /\$\{(.*?)\}/gm;
     protected workspaceRegex = /workspaceFolder\[(\d+)\]/gm;
@@ -11,10 +23,13 @@ export class VariableResolver {
     protected commandVarRegex = /command:(.+)/m;
     protected rememberedValue?: string;
     protected userInputContext?: UserInputContext;
+    protected input: Input;
 
-    constructor(userInputContext?: UserInputContext, rememberedValue?: string) {
-       this.userInputContext = userInputContext; 
+    constructor(input: Input, userInputContext?: UserInputContext,
+                rememberedValue?: string) {
+       this.userInputContext = userInputContext;
        this.rememberedValue = rememberedValue;
+       this.input = input;
     }
 
     async resolve(str: string): Promise<string | undefined> {
@@ -77,9 +92,9 @@ export class VariableResolver {
     protected bindConfiguration(value: string): string {
         switch (value) {
             case 'workspaceFolder':
-                return vscode.workspace.workspaceFolders?.[0].uri.fsPath ?? '';
+                return vscode.workspace.workspaceFolders?.[this.input.workspaceIndex].uri.fsPath ?? '';
             case 'workspaceFolderBasename':
-                return vscode.workspace.workspaceFolders?.[0].name ?? '';
+                return vscode.workspace.workspaceFolders?.[this.input.workspaceIndex].name ?? '';
             case 'fileBasenameNoExtension':
                     return path.parse(vscode.window.activeTextEditor?.document.fileName ?? '').name;
             case 'fileBasename':
