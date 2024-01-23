@@ -188,9 +188,7 @@ export class CommandHandler {
     }
 
     protected resolveTaskToInput(taskId: string | undefined) {
-        type Folder = { uri: vscode.Uri, index: number };
-
-        function* getSectionInputs(section: "launch" | "tasks", folder?: Folder) {
+        function* getSectionInputs(section: "launch" | "tasks", folder?: vscode.WorkspaceFolder) {
             const keys = folder
                 ? ["workspaceFolderValue"] as const
                 : ["workspaceValue", "globalValue"] as const;

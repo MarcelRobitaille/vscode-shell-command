@@ -16,7 +16,8 @@ export type Input = {
 
 export class VariableResolver {
     protected expressionRegex = /\$\{(.*?)\}/gm;
-    protected workspaceRegex = /workspaceFolder\[(\d+)\]/gm;
+    protected workspaceIndexedRegex = /workspaceFolder\[(\d+)\]/gm;
+    protected workspaceNamedRegex = /workspaceFolder:([^\}]+)/gm;
     protected configVarRegex = /config:(.+)/m;
     protected envVarRegex = /env:(.+)/m;
     protected inputVarRegex = /input:(.+)/m;
@@ -39,8 +40,11 @@ export class VariableResolver {
         let result = str.replace(
             this.expressionRegex,
             (_: string, value: string): string => {
-                if (this.workspaceRegex.test(value)) {
+                if (this.workspaceIndexedRegex.test(value)) {
                     return this.bindIndexedFolder(value);
+                }
+                if (this.workspaceNamedRegex.test(value)) {
+                    return this.bindNamedFolder(value);
                 }
                 if (this.configVarRegex.test(value)) {
                     return this.bindWorkspaceConfigVariable(value);
@@ -78,11 +82,22 @@ export class VariableResolver {
 
     protected bindIndexedFolder(value: string): string {
         return value.replace(
-            this.workspaceRegex,
+            this.workspaceIndexedRegex,
             (_: string, index: string): string => {
                 const idx = Number.parseInt(index);
-                if (vscode.workspace.workspaceFolders?.[idx]) {
-                    return vscode.workspace.workspaceFolders?.[idx]?.uri.fsPath ?? '';
+                return vscode.workspace.workspaceFolders?.[idx]?.uri.fsPath ?? '';
+            },
+        );
+    }
+
+    protected bindNamedFolder(value: string): string {
+        return value.replace(
+            this.workspaceNamedRegex,
+            (_: string, name: string): string => {
+                for (const folder of vscode.workspace.workspaceFolders ?? []) {
+                    if (folder.name == name) {
+                        return folder.uri.fsPath;
+                    }
                 }
                 return '';
             },
