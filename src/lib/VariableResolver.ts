@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { UserInputContext } from './UserInputContext';
+import { ShellCommandException } from '../util/exceptions';
 
 export class VariableResolver {
     protected expressionRegex = /\$\{(.*?)\}/gm;
@@ -81,9 +82,9 @@ export class VariableResolver {
             case 'workspaceFolderBasename':
                 return vscode.workspace.workspaceFolders?.[0].name ?? '';
             case 'fileBasenameNoExtension':
-                    return path.parse(vscode.window.activeTextEditor?.document.fileName ?? '').name;
+                return path.parse(vscode.window.activeTextEditor?.document.fileName ?? '').name;
             case 'fileBasename':
-                    return path.parse(vscode.window.activeTextEditor?.document.fileName ?? '').base;
+                return path.parse(vscode.window.activeTextEditor?.document.fileName ?? '').base;
             case 'file':
                 return vscode.window.activeTextEditor?.document.fileName ?? '';
             case 'lineNumber':
@@ -102,7 +103,7 @@ export class VariableResolver {
                 return this.rememberedValue ?? '';
         }
 
-        return '';
+        throw new ShellCommandException(`No such variable '${value}'`);
     }
 
     protected bindWorkspaceConfigVariable(value: string): string {
