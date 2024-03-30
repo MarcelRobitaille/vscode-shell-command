@@ -13,6 +13,7 @@ export class CommandHandler {
     protected userInputContext: UserInputContext;
     protected input: Input;
     protected command: string;
+    protected commandArgs: string[] | undefined;
     protected subprocess: typeof child_process;
 
     constructor(args: ShellCommandOptions,
@@ -33,7 +34,15 @@ export class CommandHandler {
             );
         }
 
+        if (!(args.commandArgs === undefined || Array.isArray(args.commandArgs))) {
+            throw new ShellCommandException(
+                'The "commandArgs" property should be an array of strings ' +
+                `(if defined) but got "${typeof args.commandArgs}".`
+            );
+        }
+
         this.command = command;
+        this.commandArgs = args.commandArgs as string[] | undefined;
 
         this.input = this.resolveTaskToInput(args.taskId);
 
@@ -54,6 +63,19 @@ export class CommandHandler {
             );
         } else {
             this.command = command;
+        }
+
+        if (this.commandArgs !== undefined) {
+            for (const i in this.commandArgs) {
+                const item = await resolver.resolve(this.commandArgs[i]);
+
+                if (item === undefined) {
+                    throw new ShellCommandException(
+                        `"commandArgs" element at index ${i} is invalid.`);
+                } else {
+                    this.commandArgs[i] = item;
+                }
+            }
         }
 
         if (this.args.rememberPrevious && this.args.taskId === undefined) {
@@ -100,7 +122,12 @@ export class CommandHandler {
             maxBuffer: this.args.maxBuffer,
             //    shell: vscode.env.shell
         };
-        return this.subprocess.execSync(this.command, options);
+
+        if (this.commandArgs !== undefined) {
+            return this.subprocess.execFileSync(this.command, this.commandArgs, options);
+        } else {
+            return this.subprocess.execSync(this.command, options);
+        }
     }
 
     protected parseResult(result: string): QuickPickItem[] {
