@@ -1,5 +1,7 @@
 # Tasks: Shell Input ngx
 
+**Deprecated. Please use [augustocdias/vscode-shell-command](https://github.com/augustocdias/vscode-shell-command)**
+
 **NOTE:** This is a fork of [augustocdias/vscode-shell-command](https://github.com/augustocdias/vscode-shell-command).
 @augustocdias if at any time you do not want this fork to exist, please just let me know.
 For context, please see [here](https://github.com/augustocdias/vscode-shell-command/pull/68).
